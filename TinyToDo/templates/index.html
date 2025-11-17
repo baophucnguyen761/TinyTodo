@@ -1,0 +1,176 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8">
+  <title>TinyToDo</title>
+  <link rel="stylesheet" href="{{ url_for('static', filename='styles.css') }}">
+</head>
+<body>
+
+<div class="app">
+
+  <!-- HEADER -->
+  <header class="header">
+    <div class="title-area">
+      <div class="logo-pill">📒</div>
+      <div>
+        <h1>TinyToDo</h1>
+        <p class="subtitle">Simple planner for your day</p>
+      </div>
+    </div>
+
+    {% set total = tasks|length %}
+    {% set done = tasks|selectattr('done')|list|length %}
+    {% set pending = total - done %}
+    <div class="stats">
+      <div class="stat-card">
+        <span class="stat-label">Total</span>
+        <span class="stat-value">{{ total }}</span>
+      </div>
+      <div class="stat-card">
+        <span class="stat-label">Completed</span>
+        <span class="stat-value">{{ done }}</span>
+      </div>
+      <div class="stat-card">
+        <span class="stat-label">Pending</span>
+        <span class="stat-value">{{ pending }}</span>
+      </div>
+    </div>
+  </header>
+
+  <!-- ADD TASK -->
+  <section class="add-section">
+    <h2 class="section-title">Add a task</h2>
+    <form class="add-form" action="{{ url_for('add_task') }}" method="POST">
+      <input
+        type="text"
+        name="title"
+        placeholder="Task title…"
+        required
+      >
+
+      <!-- due date -->
+      <input type="date" name="due">
+
+      <!-- category: IMPORTANT -> name="category" -->
+      <select name="category">
+        <option value="">Category…</option>
+        <option value="School">School</option>
+        <option value="Work">Work</option>
+        <option value="Home">Home</option>
+        <option value="Personal">Personal</option>
+      </select>
+
+      <!-- priority: IMPORTANT -> name="priority" -->
+      <select name="priority">
+        <option value="Medium">Priority…</option>
+        <option value="High">High</option>
+        <option value="Medium">Medium</option>
+        <option value="Low">Low</option>
+      </select>
+
+      <button type="submit">Add task</button>
+    </form>
+  </section>
+
+  <!-- FILTER BAR (visual only) -->
+  <section class="toolbar">
+    <input class="search" type="text" placeholder="Search tasks… (visual)">
+    <select class="pill-select">
+      <option>All tasks</option>
+      <option>Today</option>
+      <option>Completed</option>
+      <option>High priority</option>
+    </select>
+    <select class="pill-select">
+      <option>Sort: Newest</option>
+      <option>Sort: Oldest</option>
+      <option>Sort: Due date</option>
+      <option>Sort: Priority</option>
+    </select>
+  </section>
+
+  <!-- TASK LIST -->
+  <section class="list-section">
+    <h2 class="section-title">Today</h2>
+
+    <ul class="task-list">
+      {% if tasks %}
+        {% for task in tasks %}
+        <li class="task-card {% if task.done %}done{% endif %}">
+          <!-- COMPLETE -->
+          <div class="left">
+            <form action="{{ url_for('complete_task', index=loop.index0) }}" method="POST">
+              <input
+                type="checkbox"
+                onChange="this.form.submit()"
+                {% if task.done %}checked{% endif %}
+              >
+            </form>
+          </div>
+
+          <!-- TITLE + TAGS -->
+          <div>
+            <div class="task-title">{{ task.title }}</div>
+            <div class="task-meta">
+
+              {# CATEGORY TAG #}
+              {% set cat = task.category or 'General' %}
+              <span class="tag
+                {% if cat == 'School' %}tag-school
+                {% elif cat == 'Home' %}tag-home
+                {% elif cat == 'Personal' %}tag-personal
+                {% else %}tag-school{% endif %}
+              ">
+                {{ cat }}
+              </span>
+
+              {# STATUS / PRIORITY TAG #}
+              {% if task.done %}
+                <span class="tag tag-low">Done</span>
+              {% else %}
+                {% set pr = task.priority or 'Medium' %}
+                <span class="tag
+                  {% if pr == 'High' %}tag-high
+                  {% elif pr == 'Low' %}tag-low
+                  {% else %}tag-medium{% endif %}
+                ">
+                  {{ pr }}
+                </span>
+              {% endif %}
+
+              {# DUE DATE #}
+              <span class="due">
+                {% if task.due %}
+                  Due: {{ task.due }}
+                {% else %}
+                  No due date
+                {% endif %}
+              </span>
+            </div>
+          </div>
+
+          <!-- ACTIONS -->
+          <div class="right">
+            <button class="ghost-btn" type="button" disabled>Edit</button>
+            <form action="{{ url_for('delete_task', index=loop.index0) }}" method="POST">
+              <button class="danger-btn" type="submit">Delete</button>
+            </form>
+          </div>
+        </li>
+        {% endfor %}
+      {% else %}
+        <li class="task-card">
+          <div class="task-title">No tasks yet</div>
+          <div class="task-meta">
+            Add your first task using the form above 
+          </div>
+        </li>
+      {% endif %}
+    </ul>
+  </section>
+
+</div>
+
+</body>
+</html>
